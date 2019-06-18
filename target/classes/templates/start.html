@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>hello</title>
+<!-- jquery -->
+<script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+	<div style="text-align: center;">
+		<button style="margin-top: 10%;width:200px;height: 80px;font-size: 20px;font-weight: bold;" 
+		onclick="startSelect()">开始选课</button>
+	</div>
+</body>
+<script type="text/javascript">
+$(function(){
+	
+})
+
+
+function startSelect(){
+	window.location.href="/course/to_select_Course";
+}
+
+</script>
+</html>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="scse.com.mapper.StudentMapper">
+   
+   <update id="updateStudent" parameterType="scse.com.domain.Student">
+	    update tb_student  
+	   	<set>
+			stu_no=stu_no
+	   		<if test="password!=null and password!=''">
+	   			,password=#{password}
+	   		</if>
+	   		<if test="salt!=null and salt!=''">
+	   			,salt=#{salt}
+	   		</if>
+	   		<if test="major!=null and major!=''">
+	   			,major=#{major}
+	   		</if>
+	   		<if test="stuName!=null and stuName!=''">
+	   			,stu_name=#{stuName}
+	   		</if>
+	   		<if test="grade>0">
+	   			,grade=#{grade}
+	   		</if>
+	   		<if test="haveCredits>0">
+	   			,have_credits=#{haveCredits}
+	   		</if>
+	   		<if test="mayCredits>0">
+	   			,may_credits=#{mayCredits}
+	   		</if>
+				where stu_no=#{stuNo} 
+	   	</set>
+	</update>
+    
+</mapper>

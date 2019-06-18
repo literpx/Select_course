@@ -1,0 +1,347 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>选课页面</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- jquery -->
+<script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
+<!-- 自定义css -->
+<link rel="stylesheet" type="text/css" th:href="@{/css/selectCourse.css}" />
+<!-- bootstrap -->
+<link rel="stylesheet" type="text/css" th:href="@{/bootstrap/css/bootstrap.min.css}" />
+<script type="text/javascript" th:src="@{/bootstrap/js/bootstrap.min.js}"></script>
+<!-- layer -->
+<script type="text/javascript" th:src="@{/layer/layer.js}"></script>
+<!-- common.js -->
+<script type="text/javascript" th:src="@{/js/common.js}"></script>
+<style type="text/css">
+table{
+	width:100%;
+	text-align: center;
+}
+thead>tr th{
+	text-align: center;
+}
+tr td:not(:first-child){
+	width:18%;
+	height: 50px;
+}
+.course-list-li:hover{
+	cursor: pointer;
+}
+#seekDiv{
+	position: fixed;
+	z-index: 20;
+	right: -250px;
+	top:340px;
+}
+#seekDiv>input{
+	width: 250px;
+}
+#seekBtn{
+	position: fixed;
+	z-index: 21;
+	right: 10px;
+	top:340px;
+}
+.input-left{
+	right: -250px;
+}
+.input-right{
+
+}
+</style>
+</head>
+<body>
+<div class="course-content">
+	<div id="seekDiv">
+		<input type="text" class="form-control" id="seekCourseId" placeholder="seek course"
+		onblur="inputOnBlur()" onfocus="inputOnfocus()"/>
+	</div>
+	<button type="button" class="btn btn-primary" id="seekBtn" onclick="doSeek()">搜索</button>
+	<div class="course-list">
+		<div id="course-list-top">
+			<span th:text="${student.stuNo}+'   '+${student.stuName}"></span>
+			<p>可用学分<font color="red" th:text="' '+${student.mayCredits}" id="stuMayCredits"></font>
+			&nbsp;&nbsp;&nbsp; 已修学分
+			<font color="#008800"  th:text="' '+${student.haveCredits}" id="stuHaveCredits">&nbsp;</font></p>
+		</div>
+		<div id="course-list-center">
+			<ul class="list-unstyled" th:each="course,iterStat:${courseList}">
+			  <li  class="course-list-li"  
+			 	 th:onclick="'javascript:getCourseGroup(\''+${course.courseId}+'\');'">
+			 	 <span th:attr="title=${course.beforeCourse} " th:text="${course.courseName}" 
+			 	 th:id="${course.courseName}" ></span>
+			 	 </li>
+			</ul>
+		</div>
+		<div id="course-list-bottom">
+			<button type="button" class="btn btn-primary btn-sm" onclick="doSelect()">选课</button>
+			<button type="button" class="btn btn-warning btn-sm" onclick="cancelSelect()">退课</button>
+		</div>
+	</div>
+	<div class="course-right">
+		<div class="course-right-top" id="studentCoursel">
+			<table class="table table-bordered table-striped">
+				<thead>
+				    <tr>
+				   	  <th th:text="时间" style="width:100px"></th>
+				      <th th:each="week:${weeks}" th:text="${week.week}"></th>
+				    </tr>
+				</thead>
+				<tr th:each="time,iterStat:${times}">
+				<td>
+					<span th:text="${#dates.format(time.begin, 'HH:mm')}+'-'
+						+${#dates.format(time.end, 'HH:mm')}"></span><br/>
+					<span th:text="' ('+${time.desc}+')'"></span>
+				</td>     
+					<td th:each="x : ${#numbers.sequence(1,#lists.size(weeks))}" >
+					<span th:each="take : ${takes}">
+						<span th:if="${take.courseGroup.bigCourseTime.timeId==iterStat.count
+							and take.courseGroup.bigCourseWeek.weekId==x}">
+							<input type ="radio" name="stuSelectRadio" th:value="${take.courseGroup.groupId}"/>
+							<input type="text" hidden="hidden" th:value="${take.courseGroup.course.courseId}"/>
+							<span th:unless="${take.courseGroup.bigCourseDeadline.deadlineId==6}">
+								<span th:text="${take.courseGroup.course.courseName}"></span><br/>	
+								<span th:text="'(大课 '+${take.courseGroup.bigCourseDeadline.deadline}+')  '
+								+${take.courseGroup.bigCourseTeacher.teacherName}"></span>
+								<br/>
+							</span>
+							<span th:if="${take.courseGroup.bigCourseDeadline.deadlineId==6}">
+								<span th:text="${take.courseGroup.course.courseName}"></span><br/>
+								<span th:text="'(大课 单周)  ' +${take.courseGroup.bigCourseTeacher.teacherName}"></span>
+								<br/>
+							</span>
+						</span>
+						<span th:if="${take.courseGroup.smallCourseTime.timeId==iterStat.count
+							and take.courseGroup.smallCourseWeek.weekId==x}">
+							<span th:unless="${take.courseGroup.smallCourseDeadline.deadlineId==7}">
+								<span th:text="${take.courseGroup.course.courseName}"></span><br/>	
+								<span th:text="'(小课 '+${take.courseGroup.smallCourseDeadline.deadline}+')  '
+								+${take.courseGroup.smallCourseTeacher.teacherName}"></span>
+								<br/>
+							</span>
+							<span th:if="${take.courseGroup.smallCourseDeadline.deadlineId==7}">
+								<span th:text="${take.courseGroup.course.courseName}"></span><br/>
+								<span th:text="'(小课 双周)  ' +${take.courseGroup.smallCourseTeacher.teacherName}"></span>
+								<br/>
+							</span>
+						</span>
+						
+					</span>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div class="course-right-down" id="courseGroupTemplate">
+		</div>
+	</div>
+</div>
+</body>
+<script type="text/javascript">
+function inputOnfocus(){
+	$("#seekDiv").css({"display":"block"}).animate({'right':'10px'},800,function(){
+	})
+}
+function inputOnBlur(){
+	$("#seekDiv").css({"display":"block"}).animate({'right':'-250px'},800,function(){
+	})
+}
+function doSeek(){
+	var seekCourseId=$("#seekCourseId").val()
+	if(seekCourseId==null||seekCourseId==""){
+		$("#seekCourseId").focus()
+		return;
+	}
+	console.log(seekCourseId)
+	window.location.hash = "#"+seekCourseId;
+	$("#"+seekCourseId).animate({scrollTop: '20px'}, 1000);
+	$("#seekCourseId").val("")
+	$("#seekCourseId").blur()
+}
+function doSelect(){
+	var raddio=$("#courseGroupTemplate input:radio[name='selectRadio']:checked");
+	if(raddio.val()==null){
+		return;
+	}
+	g_showLoading();//加载动画，加载中
+	var groupId=raddio.val();
+	var courseId=raddio.next("input:text[hidden='hidden']").val()
+		//alert(groupId)
+		$.ajax({
+			url: "/course/do_select_Course",
+		    type: "POST",
+		    data:{
+		    	groupId:groupId
+		    },
+		    success:function(data){
+		    	layer.closeAll();
+		    	if(data.code == 0){
+		    		//layer.msg("成功");
+		    		cycleSend(groupId,courseId)
+		    	}else if(data.code == 500302){
+		    		//重复选择了，提示是否需要替换
+		    	}else if(data.code == 500303){
+		    		//重复选择了，提示是否需要替换
+		    		layer.confirm(data.msg, {btn:["确定","取消"]},
+					function(){
+		    			layer.closeAll();
+		    			doChange(groupId)
+					},function(){
+						layer.closeAll();
+					});
+		    	}else{
+		    		layer.msg(data.msg);
+		    	}
+		    },
+		    error:function(){
+		    	layer.closeAll();
+		    }
+	});
+};
+function doChange(groupId){
+	g_showLoading();//加载动画，加载中
+	$.ajax({
+		url: "/course/do_change_Course",
+	    type: "POST",
+	    data:{
+	    	groupId:groupId,
+	    },
+	    success:function(data){
+	    	layer.closeAll();
+	    	if(data.code == 0){
+	    		//调课成功
+	    		var redisSynVo=data.data
+	    		layer.confirm("调课成功!", {btn:["确定"]},
+					function(){
+						layer.closeAll();
+						getStuTake()
+						getCourseGroup(redisSynVo.courseId)
+						$("#stuMayCredits").html("&nbsp;"+redisSynVo.student.mayCredits.toFixed(1))
+				});
+	    	}else{
+	    		layer.msg(data.msg);
+	    	}
+	    },
+	    error:function(){
+	    	layer.closeAll();
+	    }
+	});
+}
+function cycleSend(groupId,courseId){
+	var groupId=groupId
+	g_showLoading();
+	$.ajax({
+		url: "/course/check_success",
+		type:"GET",
+		data:{
+			groupId:groupId,
+			courseId:courseId
+		},
+		success:function(data){
+			if(data.code == 0){
+				var  selectSuccessVo= data.data
+				console.log(data)
+				console.log(selectSuccessVo)
+				if(selectSuccessVo.status == -1){
+					layer.msg("对不起，选课失败");
+				}else if(selectSuccessVo.status == 0){//继续轮询
+					setTimeout(function(){
+						cycleSend(groupId,courseId);
+					}, 200);
+				}else{
+					layer.confirm("恭喜你，选课成功!", {btn:["确定"]},
+					function(){
+						layer.closeAll();
+						getCourseGroup(courseId)
+						$("#stuMayCredits").html("&nbsp;"+selectSuccessVo.mayCredits.toFixed(1))
+						getStuTake()
+					});
+				}
+			}else{
+				layer.msg(data.msg);
+			}
+		},
+		error:function(){
+			layer.msg("客户端请求有误");
+		}
+	});
+};
+function getStuTake(){
+	$.ajax({
+		url: "/course/getStuCourse",
+	    type: "POST",
+	    data:{
+	    },
+	    success:function(data){
+	    	if(data.code == 0){
+	    		$("#studentCoursel").html(data.data)
+	    	}else{
+	    		console.log(data.msg);
+	    	}
+	    }
+	});
+}
+function cancelSelect(){
+	var raddio=$("#studentCoursel input:radio[name='stuSelectRadio']:checked");
+	if(raddio.val()==null){
+		return;
+	}
+	layer.confirm("确定取消该课程?", {btn:["确定","取消"]},
+	function(){
+		var groupId=raddio.val();
+		var courseId=raddio.next("input:text[hidden='hidden']").val()
+		g_showLoading();
+		$.ajax({
+			url: "/course/do_cancel_select",
+			type:"POST",
+			data:{
+				groupId:groupId,
+				courseId:courseId
+			},
+			success:function(data){
+				layer.closeAll();
+				var mayCredits=data.data;
+				if(data.code == 0){
+					//退课成功
+					layer.confirm("退课成功!", {btn:["确定"]},
+					function(){
+						layer.closeAll();
+						getStuTake()
+						getCourseGroup(courseId)
+						$("#stuMayCredits").html("&nbsp;"+mayCredits.toFixed(1))
+					});
+					
+				}else{
+					layer.msg(data.msg);
+				}
+			},
+			error:function(){
+				layer.msg("客户端请求有误");
+			}
+		});
+	},function(){
+		layer.closeAll();
+	});
+};
+function getCourseGroup(courseId){
+	g_showLoading();//加载动画，加载中
+	$.ajax({
+		url: "/course/getCourseGroup",
+	    type: "POST",
+	    data:{
+	    	courseId:courseId
+	    },
+	    success:function(data){
+	    	layer.closeAll();
+	    	if(data.code == 0){
+	    		$("#courseGroupTemplate").html(data.data)
+	    	}else{
+	    		console.log(data.msg);
+	    	}
+	    }
+	});
+}
+	
+</script>
+</html>

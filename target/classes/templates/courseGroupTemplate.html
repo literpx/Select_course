@@ -1,0 +1,49 @@
+<table class="table table-bordered" style="background-color: #efefef;">
+				<tr th:each="time,iterStat:${times}">
+					<td>
+						<span th:text="${#dates.format(time.begin, 'HH:mm')}+'-'
+							+${#dates.format(time.end, 'HH:mm')}"></span><br/>
+						<span th:text="' ('+${time.desc}+')'"></span>
+					</td> 
+					<td th:each="x : ${#numbers.sequence(1,#lists.size(weeks))}" >
+					<span th:each="courseGroup : ${courseGroups}">
+						<span th:if="${courseGroup.bigCourseTime.timeId==iterStat.count
+							and courseGroup.bigCourseWeek.weekId==x}">
+							<input type ="radio" name="selectRadio" th:value="${courseGroup.groupId}"
+							 th:if="${courseGroup.count>0}"/>
+							 <input type="text" hidden="hidden" th:value="${courseGroup.course.courseId}"/>
+							<span th:text="${courseGroup.course.courseName}+
+									' '+${courseGroup.groupName}"></span><br/>	
+							<span th:unless="${courseGroup.bigCourseDeadline.deadlineId==6}">
+								<span th:text="'(大课 '+${courseGroup.bigCourseDeadline.deadline}+')  '
+								+${courseGroup.bigCourseTeacher.teacherName}"></span>
+								<span  th:text="'(余'+${courseGroup.count}+'人)'"></span>
+								<br/>
+							</span>
+							<span th:if="${courseGroup.bigCourseDeadline.deadlineId==6}">
+								<span th:text="'(大课 单周)  ' +${courseGroup.bigCourseTeacher.teacherName}"></span>
+								<span  th:text="'(余'+${courseGroup.count}+'人)'"></span>
+								<br/>
+							</span>
+							
+						</span>
+						<span th:if="${courseGroup.smallCourseTime.timeId==iterStat.count
+							and courseGroup.smallCourseWeek.weekId==x}">
+							<span th:text="${courseGroup.course.courseName}+
+									' '+${courseGroup.groupName}"></span><br/>	
+							<span th:unless="${courseGroup.smallCourseDeadline.deadlineId==7}">
+								<span th:text="'(小课 '+${courseGroup.smallCourseDeadline.deadline}+')  '
+								+${courseGroup.smallCourseTeacher.teacherName}"></span>
+								<span  th:text="'(余'+${courseGroup.count}+'人)'"></span>
+								<br/>
+							</span>
+							<span th:if="${courseGroup.smallCourseDeadline.deadlineId==7}">
+								<span th:text="'(小课 双周)  ' +${courseGroup.smallCourseTeacher.teacherName}"></span>
+								<span  th:text="'(余'+${courseGroup.count}+'人)'"></span>
+								<br/>
+							</span>
+						</span>
+					</span>
+					</td>
+				</tr>
+		</table>
