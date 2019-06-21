@@ -55,12 +55,11 @@ public class StudentService {
 		String token=UUIDUtil.uuid();
 		//更新数据库密码和salt
 		String newPassword=MD5Util.formPassToDBPass(inputPassword,token);
-		Student newStudent=new Student();
-		newStudent.setPassword(newPassword);
-		newStudent.setSalt(token);
-		newStudent.setStuNo(student.getStuNo());
+		student.setPassword(newPassword);
+		student.setSalt(token);
+		student.setStuNo(student.getStuNo());
 		//发送到处理队列
-		sender.sendUpdateStudent(newStudent);
+		sender.sendUpdateStudent(student);
 		addCookie(response, token, student);
 		return true;
 	}

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import scse.com.access.StudentContext;
 import scse.com.controller.CourseController;
 import scse.com.domain.Course;
 import scse.com.domain.CourseGroup;
@@ -144,6 +145,7 @@ public class TakeService {
 	}
 
 	public boolean checkDeadlineRepeat(int deadline,int checkDeadline) {
+		//checkDeadline为想要选修的课程的期限
 		if(deadline==0) {
 			return false; 
 		}
@@ -160,6 +162,9 @@ public class TakeService {
 			return false;  
 		}
 		if(checkDeadline==1&&deadline==2||checkDeadline==1&&deadline==3||checkDeadline==1&&deadline==4) {  
+			return false;  
+		}
+		if(checkDeadline==3&&deadline==4||checkDeadline==4&&deadline==3) {  
 			return false;  
 		}
 		return true;
@@ -190,14 +195,12 @@ public class TakeService {
 		}
 		if(!isChange) {
 			//减少学生学分
-			Student stu=new Student();
-			stu.setStuNo(student.getStuNo());
-			stu.setMayCredits(student.getMayCredits()-course.getNeedCredits());
-			log.info(stu.toString());
-			if(!studentService.updateStudent(stu)) {
+			student.setMayCredits(student.getMayCredits()-course.getNeedCredits());
+			if(!studentService.updateStudent(student)) {
 				redisService.set(CourseKey.select_success,groupId+student.getStuNo()+"",-1);
 				return false;
 			}
+			redisService.set(StudentKey.token, student.getSalt(), student);
 		}
 		//添加学生选修表
 		TakeIn takeIn=new TakeIn();
@@ -233,13 +236,11 @@ public class TakeService {
 		}
 		if(!isChange) {
 			//增加学生学分
-			Student stu=new Student();
-			stu.setStuNo(student.getStuNo());
-			stu.setMayCredits(student.getMayCredits()+courseGroup.getCourse().getNeedCredits());
-			//log.info(stu.toString());
-			if(!studentService.updateStudent(stu)) {
+			student.setMayCredits(student.getMayCredits()+courseGroup.getCourse().getNeedCredits());
+			if(!studentService.updateStudent(student)) {
 				return false;
 			}
+			redisService.set(StudentKey.token, student.getSalt(), student);
 		}
 		//增加课程组的人数
 		if(!courseGroupService.incCourseGroupCount(courseGroup.getGroupId())) {
@@ -264,7 +265,6 @@ public class TakeService {
 	 * 学号跟课程id
 	 */
 	private void redisSynInfo(Student student, String courseId) {
-		redisService.set(StudentKey.token, student.getSalt(), student);
 		//redis同步学生选修表
 		ArrayList<Take> newTakes=this.getTakeByStuNo(student.getStuNo());
 		redisService.set(TakeKey.stu_takes,student.getStuNo()+"", newTakes);

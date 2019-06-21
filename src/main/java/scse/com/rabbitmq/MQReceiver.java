@@ -48,6 +48,7 @@ public class MQReceiver {
 		Student student=JSON.parseObject(message, Student.class);
 		if(studentService.updateStudent(student)) {
 			log.info("密码更新成功！！！");
+			redisService.set(StudentKey.token, student.getSalt(), student);
 		}
 	}
 	@RabbitListener(queues=MQConfig.DO_SELECT)

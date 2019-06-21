@@ -393,7 +393,7 @@ public class CourseController implements InitializingBean {
 		if(deadlineBig.size()>0) {
 			for(int i:deadlineBig) {
 				if(takeService.checkDeadlineRepeat(i,courseGroup.getBigCourseDeadline().getDeadlineId())) {
-					System.out.println("课程冲突！！！！！！");
+					System.out.println("大课课程冲突！！！！！！");
 					return true;  //true为是冲突
 				}
 			}
@@ -401,7 +401,7 @@ public class CourseController implements InitializingBean {
 		if(deadlineSmall.size()>0) {
 			for(int j:deadlineSmall) {
 				if(takeService.checkDeadlineRepeat(j,courseGroup.getSmallCourseDeadline().getDeadlineId())) {
-					System.out.println("课程冲突！！！！！！");
+					System.out.println("小课课程冲突！！！！！！");
 					return true;
 				}
 			}
@@ -526,7 +526,7 @@ public class CourseController implements InitializingBean {
 		if(result>0) {
 			System.out.println("redis中查询成功！！！！！！");
 			//获取学生新信息
-			Student stu=studentService.getStudentByNo(student.getStuNo());
+			Student stu=redisService.get(StudentKey.token, student.getSalt(), Student.class);
 			return Result.success(new SelectSuccessVo(1,stu.getMayCredits())); 
 		}else if(result==0) {
 			return Result.success(new SelectSuccessVo(0)); 
